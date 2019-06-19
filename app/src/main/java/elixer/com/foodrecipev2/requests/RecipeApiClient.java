@@ -16,16 +16,19 @@ import elixer.com.foodrecipev2.util.Constants;
 import retrofit2.Call;
 import retrofit2.Response;
 
-import static android.support.constraint.Constraints.TAG;
+import static elixer.com.foodrecipev2.util.Constants.NETWORK_TIMEOUT;
 
 public class RecipeApiClient {
+
+    private static final String TAG = "RecipeApiClient";
+
     private static RecipeApiClient instance;
     private MutableLiveData<List<Recipe>> mRecipes;
     private RetrieveRecipesRunnable mRetrieveRecipesRunnable;
 
-    public static RecipeApiClient getInstance() {
 
-        if (instance == null) {
+    public static RecipeApiClient getInstance(){
+        if(instance == null){
             instance = new RecipeApiClient();
         }
         return instance;
@@ -33,29 +36,30 @@ public class RecipeApiClient {
 
     private RecipeApiClient() {
         mRecipes = new MutableLiveData<>();
-
     }
 
-    public LiveData<List<Recipe>> getmRecipes() {
+    public LiveData<List<Recipe>> getRecipes(){
         return mRecipes;
     }
 
-    public void searchRecipesApi(String query, int pageNumber) {
-        if (mRetrieveRecipesRunnable != null) {
+    public void searchRecipesApi(String query, int pageNumber){
+        if(mRetrieveRecipesRunnable != null){
             mRetrieveRecipesRunnable = null;
         }
         mRetrieveRecipesRunnable = new RetrieveRecipesRunnable(query, pageNumber);
-        final Future handler = AppExecutors.getInstance().networkIO().submit(mRetrieveRecipesRunnable);
-        AppExecutors.getInstance().networkIO().schedule(new Runnable() {
+        final Future handler = AppExecutors.get().networkIO().submit(mRetrieveRecipesRunnable);
+
+        // Set a timeout for the data refresh
+        AppExecutors.get().networkIO().schedule(new Runnable() {
             @Override
             public void run() {
-                //Notify user about time out
+                // let the user know it timed out
                 handler.cancel(true);
             }
-        }, Constants.NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
+        }, NETWORK_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
-    private class RetrieveRecipesRunnable implements Runnable {
+    private class RetrieveRecipesRunnable implements Runnable{
 
         private String query;
         private int pageNumber;
@@ -72,19 +76,21 @@ public class RecipeApiClient {
 
             try {
                 Response response = getRecipes(query, pageNumber).execute();
-                if (cancelRequest) {
+                if(cancelRequest){
                     return;
                 }
-                if (response.code() == 200) {
-                    List<Recipe> list = new ArrayList<>(((RecipeSearchResponse) response.body()).getRecipes());
-                    if (pageNumber == 1) {
+                if(response.code() == 200){
+                    List<Recipe> list = new ArrayList<>(((RecipeSearchResponse)response.body()).getRecipes());
+                    if(pageNumber == 1){
                         mRecipes.postValue(list);
-                    } else {
+                    }
+                    else{
                         List<Recipe> currentRecipes = mRecipes.getValue();
                         currentRecipes.addAll(list);
                         mRecipes.postValue(currentRecipes);
                     }
-                } else {
+                }
+                else{
                     String error = response.errorBody().string();
                     Log.e(TAG, "run: error: " + error);
                     mRecipes.postValue(null);
@@ -95,29 +101,23 @@ public class RecipeApiClient {
             }
         }
 
-        private Call<RecipeSearchResponse> getRecipes(String query, int pageNumber) {
+        private Call<RecipeSearchResponse> getRecipes(String query, int pageNumber){
             return ServiceGenerator.getRecipeApi().searchRecipe(
                     Constants.API_KEY,
                     query,
                     String.valueOf(pageNumber));
         }
 
-        private void cancelRequest() {
+        private void cancelRequest(){
             Log.d(TAG, "cancelRequest: canceling the retrieval query");
             cancelRequest = true;
         }
     }
-
-    private Call<RecipeSearchResponse> getRecipes(String query, int pageNumber) {
-        return ServiceGenerator.getRecipeApi().searchRecipe(
-                Constants.API_KEY,
-                query,
-                String.valueOf(pageNumber));
-    }
-
-    private void cancelRequest() {
-        Log.d(TAG, "cancelRequest: canceling the retrieval query");
-
-
-    }
 }
+
+
+
+
+
+
+

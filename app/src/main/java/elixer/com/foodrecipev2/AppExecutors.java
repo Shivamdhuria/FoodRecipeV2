@@ -7,15 +7,18 @@ public class AppExecutors {
 
     private static AppExecutors instance;
 
-    public static AppExecutors getInstance(){
-
-        if(instance == null ){
+    public static AppExecutors get(){
+        if(instance == null){
             instance = new AppExecutors();
         }
         return instance;
     }
+
     private final ScheduledExecutorService mNetworkIO = Executors.newScheduledThreadPool(3);
-    public ScheduledExecutorService networkIO(){
+
+    public ScheduledExecutorService networkIO() {
         return mNetworkIO;
     }
 }
+
+
