@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 
 
@@ -35,7 +36,7 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
 
         initRecyclerView();
         subscribeObservers();
-        testRetrofitRequest();
+       initSearchView();
     }
 
     private void subscribeObservers(){
@@ -50,6 +51,28 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
             }
         });
     }
+
+    private void initSearchView(){
+        SearchView mSearchView = findViewById(R.id.search_view);
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+
+                mAdapter.displayLoading();
+                mRecipeListViewModel.searchRecipesApi(s, 1);
+//                mSearchView.clearFocus();
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+    }
+
+
 
     private void testRetrofitRequest(){
         mRecipeListViewModel.searchRecipesApi("chicken", 1);
