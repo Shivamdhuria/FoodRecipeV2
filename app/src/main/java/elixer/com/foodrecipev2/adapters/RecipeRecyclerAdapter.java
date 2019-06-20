@@ -1,5 +1,6 @@
 package elixer.com.foodrecipev2.adapters;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,14 +15,13 @@ import java.util.List;
 
 import elixer.com.foodrecipev2.R;
 import elixer.com.foodrecipev2.models.Recipe;
+import elixer.com.foodrecipev2.util.Constants;
 
 public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int RECIPE_TYPE = 1;
     private static final int LOADING_TYPE = 2;
     private static final int CATEGORY_TYPE = 3;
-    private static final int EXHAUSTED_TYPE = 4;
-
 
     private List<Recipe> mRecipes;
     private OnRecipeListener mOnRecipeListener;
@@ -31,33 +31,29 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         mRecipes = new ArrayList<>();
     }
 
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View view = null;
 
         switch (i) { // i is the view type constant
-            case RECIPE_TYPE: {
+            case RECIPE_TYPE:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
                 return new RecipeViewHolder(view, mOnRecipeListener);
             }
 
-//            case CATEGORY_TYPE:{
-//                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
-//                return new CategoryViewHolder(view, mOnRecipeListener);
-//            }
+            case CATEGORY_TYPE:{
+                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_category_list_item, viewGroup, false);
+                return new CategoryViewHolder(view, mOnRecipeListener);
+            }
 
-            case LOADING_TYPE: {
+            case LOADING_TYPE:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_loading_list_item, viewGroup, false);
                 return new LoadingViewHolder(view);
             }
 
-//            case EXHAUSTED_TYPE:{
-//                view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_search_exhausted, viewGroup, false);
-//                return new SearchExhaustedViewHolder(view);
-//            }
-
-            default: {
+            default:{
                 view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_recipe_list_item, viewGroup, false);
                 return new RecipeViewHolder(view, mOnRecipeListener);
             }
@@ -67,10 +63,8 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
 
-
         int itemViewType = getItemViewType(i);
-
-        if (itemViewType == RECIPE_TYPE) {
+        if(itemViewType == RECIPE_TYPE) {
             // set the image
             RequestOptions options = new RequestOptions()
                     .centerCrop()
@@ -85,41 +79,37 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             ((RecipeViewHolder) viewHolder).publisher.setText(mRecipes.get(i).getPublisher());
             ((RecipeViewHolder) viewHolder).socialScore.setText(String.valueOf(Math.round(mRecipes.get(i).getSocial_rank())));
         }
-//        else if(itemViewType == CATEGORY_TYPE){
-//            RequestOptions options = new RequestOptions()
-//                    .centerCrop()
-//                    .error(R.drawable.ic_launcher_background);
-//
-//            Uri path = Uri.parse("android.resource://elixer.com.foodrecipe/drawable/" + mRecipes.get(i).getImage_url());
-//            Glide.with(((CategoryViewHolder)viewHolder).itemView)
-//                    .setDefaultRequestOptions(options)
-//                    .load(path)
-//                    .into(((CategoryViewHolder)viewHolder).categoryImage);
-//
-//            ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
-//        }
-    }
+        else if(itemViewType == CATEGORY_TYPE){
+            RequestOptions options = new RequestOptions()
+                    .centerCrop()
+                    .error(R.drawable.ic_launcher_background);
 
-    @Override
-    public int getItemCount() {
-        if (mRecipes != null) {
-            return mRecipes.size();
+            Uri path = Uri.parse("android.resource://elixer.com.foodrecipev2/drawable/" + mRecipes.get(i).getImage_url());
+            Glide.with(((CategoryViewHolder)viewHolder).itemView)
+                    .setDefaultRequestOptions(options)
+                    .load(path)
+                    .into(((CategoryViewHolder)viewHolder).categoryImage);
+
+            ((CategoryViewHolder)viewHolder).categoryTitle.setText(mRecipes.get(i).getTitle());
         }
-        return 0;
-    }
-
-    public void setRecipes(List<Recipe> recipes) {
-        mRecipes = recipes;
-        notifyDataSetChanged();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (mRecipes.get(position).getTitle().equals("LOADING...")) {
+        if(mRecipes.get(position).getSocial_rank() == -1){
+            return CATEGORY_TYPE;
+        }
+        else if(mRecipes.get(position).getTitle().equals("LOADING...")){
             return LOADING_TYPE;
-        } else
+        }
+        else{
             return RECIPE_TYPE;
+        }
+    }
 
+    @Override
+    public int getItemCount() {
+        return mRecipes.size();
     }
 
     public void displayLoading(){
@@ -134,16 +124,38 @@ public class RecipeRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     private boolean isLoading(){
-        if(mRecipes!=null) {
-            if (mRecipes.size() > 0) {
-                if (mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")) {
-                    return true;
-                }
+        if(mRecipes.size() > 0){
+            if(mRecipes.get(mRecipes.size() - 1).getTitle().equals("LOADING...")){
+                return true;
             }
         }
         return false;
     }
+
+    public void setRecipes(List<Recipe> recipes){
+        mRecipes = recipes;
+        notifyDataSetChanged();
+    }
+
+    public void displaySearchCategories(){
+        List<Recipe> categories = new ArrayList<>();
+        for(int i = 0; i < Constants.DEFAULT_SEARCH_CATEGORIES.length; i++){
+            Recipe recipe = new Recipe();
+            recipe.setTitle(Constants.DEFAULT_SEARCH_CATEGORIES[i]);
+            recipe.setImage_url(Constants.DEFAULT_SEARCH_CATEGORY_IMAGES[i]);
+            recipe.setSocial_rank(-1);
+            categories.add(recipe);
+        }
+        mRecipes = categories;
+        notifyDataSetChanged();
+    }
 }
+
+
+
+
+
+
 
 
 

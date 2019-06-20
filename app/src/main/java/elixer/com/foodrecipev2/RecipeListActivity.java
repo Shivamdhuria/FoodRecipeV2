@@ -18,6 +18,8 @@ import elixer.com.foodrecipev2.models.Recipe;
 import elixer.com.foodrecipev2.util.Testing;
 import elixer.com.foodrecipev2.viewmodels.RecipeListViewModel;
 
+import static android.support.constraint.Constraints.TAG;
+
 public class RecipeListActivity extends BaseActivity implements OnRecipeListener {
 
     private static final String TAG = "RecipeListActivity";
@@ -37,6 +39,15 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
         initRecyclerView();
         subscribeObservers();
        initSearchView();
+        if(!mRecipeListViewModel.isViewingRecipes()){
+            // display search categories
+            displaySearchCategories();
+        }
+    }
+
+    private void displaySearchCategories() {
+        mRecipeListViewModel.setIsViewingRecipes(false);
+        mAdapter.displaySearchCategories();
     }
 
     private void subscribeObservers(){
@@ -91,7 +102,9 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
 
     @Override
     public void onCategoryClick(String category) {
-
+        Log.e(TAG, "onClick:......... " );
+        mAdapter.displayLoading();
+        mRecipeListViewModel.searchRecipesApi(category , 1);
     }
 }
 
