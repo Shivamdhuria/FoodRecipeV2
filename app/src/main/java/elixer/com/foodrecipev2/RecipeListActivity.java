@@ -9,16 +9,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 
-
 import java.util.List;
 
 import elixer.com.foodrecipev2.adapters.OnRecipeListener;
 import elixer.com.foodrecipev2.adapters.RecipeRecyclerAdapter;
 import elixer.com.foodrecipev2.models.Recipe;
-import elixer.com.foodrecipev2.util.Testing;
 import elixer.com.foodrecipev2.viewmodels.RecipeListViewModel;
-
-import static android.support.constraint.Constraints.TAG;
 
 public class RecipeListActivity extends BaseActivity implements OnRecipeListener {
 
@@ -27,19 +23,21 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
     private RecipeListViewModel mRecipeListViewModel;
     private RecyclerView mRecyclerView;
     private RecipeRecyclerAdapter mAdapter;
+    SearchView mSearchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_list);
         mRecyclerView = findViewById(R.id.recipe_list);
+        mSearchView = findViewById(R.id.search_view);
 
         mRecipeListViewModel = ViewModelProviders.of(this).get(RecipeListViewModel.class);
 
         initRecyclerView();
         subscribeObservers();
-       initSearchView();
-        if(!mRecipeListViewModel.isViewingRecipes()){
+        initSearchView();
+        if (!mRecipeListViewModel.isViewingRecipes()) {
             // display search categories
             displaySearchCategories();
         }
@@ -50,28 +48,31 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
         mAdapter.displaySearchCategories();
     }
 
-    private void subscribeObservers(){
+    private void subscribeObservers() {
 
         mRecipeListViewModel.getRecipes().observe(this, new Observer<List<Recipe>>() {
             @Override
             public void onChanged(@Nullable List<Recipe> recipes) {
-                if(recipes != null){
-                    Testing.printRecipes("network test", recipes);
+                if (recipes != null) {
+                    if (mRecipeListViewModel.isViewingRecipes()) {
+                        mRecipeListViewModel.setIsViewingRecipes(false);
+                        mAdapter.setRecipes(recipes);
+                    }
                 }
-                mAdapter.setRecipes(recipes);
+
             }
         });
     }
 
-    private void initSearchView(){
-        SearchView mSearchView = findViewById(R.id.search_view);
+    private void initSearchView() {
+
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
 
                 mAdapter.displayLoading();
                 mRecipeListViewModel.searchRecipesApi(s, 1);
-//                mSearchView.clearFocus();
+                mSearchView.clearFocus();
 
                 return false;
             }
@@ -84,12 +85,11 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
     }
 
 
-
-    private void testRetrofitRequest(){
+    private void testRetrofitRequest() {
         mRecipeListViewModel.searchRecipesApi("chicken", 1);
     }
 
-    private void initRecyclerView(){
+    private void initRecyclerView() {
         mAdapter = new RecipeRecyclerAdapter(this);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -102,9 +102,20 @@ public class RecipeListActivity extends BaseActivity implements OnRecipeListener
 
     @Override
     public void onCategoryClick(String category) {
-        Log.e(TAG, "onClick:......... " );
+        Log.e(TAG, "onClick:......... ");
         mAdapter.displayLoading();
-        mRecipeListViewModel.searchRecipesApi(category , 1);
+        mRecipeListViewModel.searchRecipesApi(category, 1);
+        mSearchView.clearFocus();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(mRecipeListViewModel.onBackPressed()){
+            super.onBackPressed();
+        }
+        else{
+            displaySearchCategories();
+        }
     }
 }
 
