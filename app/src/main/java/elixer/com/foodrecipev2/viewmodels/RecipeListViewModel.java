@@ -20,37 +20,47 @@ public class RecipeListViewModel extends ViewModel {
 
     public RecipeListViewModel() {
         mRecipeRepository = RecipeRepository.getInstance();
-        mIsViewingRecipes = false;
+        mIsPerformingQuery = false;
     }
 
-    public LiveData<List<Recipe>> getRecipes() {
+    public LiveData<List<Recipe>> getRecipes(){
         return mRecipeRepository.getRecipes();
     }
 
-    public void searchRecipesApi(String query, int pageNumber) {
-        Log.d(TAG, "searchRecipesApi: ");
-        mIsPerformingQuery = true;
+    public LiveData<Boolean> isQueryExhausted(){
+        return mRecipeRepository.isQueryExhausted();
+    }
+
+    public void searchRecipesApi(String query, int pageNumber){
         mIsViewingRecipes = true;
+        mIsPerformingQuery = true;
         mRecipeRepository.searchRecipesApi(query, pageNumber);
     }
 
-    public boolean isViewingRecipes() {
+    public void searchNextPage(){
+        if(!mIsPerformingQuery
+                && mIsViewingRecipes
+                && !isQueryExhausted().getValue()){
+            mRecipeRepository.searchNextPage();
+        }
+    }
+
+    public boolean isViewingRecipes(){
         return mIsViewingRecipes;
     }
 
-    public void setIsViewingRecipes(boolean mIsViewingRecipes) {
-        this.mIsViewingRecipes = mIsViewingRecipes;
+    public void setIsViewingRecipes(boolean isViewingRecipes){
+        mIsViewingRecipes = isViewingRecipes;
     }
 
+    public void setmIsPerformingQuery(Boolean isPerformingQuery){
+        mIsPerformingQuery = isPerformingQuery;
+    }
 
-
-    public boolean isIsPerformingQuery() {
+    public boolean isPerformingQuery(){
         return mIsPerformingQuery;
     }
 
-    public void setIsPerformingQuery(boolean mIsPerformingQuery) {
-        this.mIsPerformingQuery = mIsPerformingQuery;
-    }
     public boolean onBackPressed(){
         if(mIsPerformingQuery){
             // cancel the query
@@ -64,4 +74,6 @@ public class RecipeListViewModel extends ViewModel {
         return true;
     }
 }
+
+
 
