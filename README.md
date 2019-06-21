@@ -2,7 +2,7 @@
 A food Recipe application using Android Jetpacks ViewModel with Retrofit.
 It uses MVVM architecture and use clean code principles.
 
-![demo](Screenshot_1561064428.png)
+![demo](Screenshot_1561064428.png | width=100)
 
 ![demo](Screenshot_1561064433.png)
 
